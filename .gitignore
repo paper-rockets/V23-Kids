@@ -11,7 +11,8 @@ crates/**/target/
 .claude/
 scripts/*.png
 scripts/screenshots/
-screenshots/
+/screenshots/
+!public/screenshots/
 ALL_SCREENSHOTS/
 fresh-audit-screenshots/
 audit-feedback/

@@ -21,7 +21,7 @@
 // The fix: name the cache after this worker's own scope plus a hand-bumped
 // version, and only evict caches carrying this same scope prefix. Bump
 // CACHE_VERSION when a release must invalidate its own old cache.
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 
 const SCOPE_SLUG =
   (new URL(self.registration.scope).pathname || '/')
@@ -44,7 +44,11 @@ const SHELL_PRECACHE = [
   './draco/draco_decoder.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
   './icons/icon.svg',
+  './screenshots/desktop.png',
+  './screenshots/mobile.png',
 ];
 
 // Runtime caching allowlist: only same-origin assets under verified paths

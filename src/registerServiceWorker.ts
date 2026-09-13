@@ -1,4 +1,4 @@
-// src/registerServiceWorker.ts
+import { resolveAssetUrl } from './utils/assetUrl';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -31,8 +31,8 @@ export function registerPWA() {
 
   // 2. Register service worker in production / modern environments
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      const swUrl = './sw.js';
+    const register = () => {
+      const swUrl = resolveAssetUrl('sw.js');
       navigator.serviceWorker
         .register(swUrl)
         .then((reg) => {
@@ -57,7 +57,13 @@ export function registerPWA() {
         .catch((err) => {
           console.warn('[PWA] Service Worker registration failed:', err);
         });
-    });
+    };
+
+    if (document.readyState === 'complete') {
+      register();
+    } else {
+      window.addEventListener('load', register);
+    }
   }
 }
 

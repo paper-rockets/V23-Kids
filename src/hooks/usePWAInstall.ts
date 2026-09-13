@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   canInstallPWA,
   promptPWAInstall,
@@ -18,6 +18,7 @@ export function usePWAInstall(): PWAInstallState {
     if (typeof window === 'undefined') return false;
     return (
       window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
       (window.navigator as any).standalone === true ||
       document.referrer.includes('android-app://')
     );
@@ -34,16 +35,23 @@ export function usePWAInstall(): PWAInstallState {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Check display mode
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const handleMediaChange = (e: MediaQueryListEvent) => {
-      setIsInstalled(e.matches);
+    // Check display mode for both standalone and fullscreen PWA
+    const mediaStandalone = window.matchMedia('(display-mode: standalone)');
+    const mediaFullscreen = window.matchMedia('(display-mode: fullscreen)');
+    const handleMediaChange = () => {
+      setIsInstalled(
+        mediaStandalone.matches ||
+          mediaFullscreen.matches ||
+          (window.navigator as any).standalone === true
+      );
     };
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleMediaChange);
+    if (mediaStandalone.addEventListener) {
+      mediaStandalone.addEventListener('change', handleMediaChange);
+      mediaFullscreen.addEventListener('change', handleMediaChange);
     } else {
-      mediaQuery.addListener(handleMediaChange);
+      mediaStandalone.addListener(handleMediaChange);
+      mediaFullscreen.addListener(handleMediaChange);
     }
 
     // Subscribe to beforeinstallprompt changes
@@ -61,10 +69,12 @@ export function usePWAInstall(): PWAInstallState {
     return () => {
       unsubscribe();
       window.removeEventListener('appinstalled', handleAppInstalled);
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handleMediaChange);
+      if (mediaStandalone.removeEventListener) {
+        mediaStandalone.removeEventListener('change', handleMediaChange);
+        mediaFullscreen.removeEventListener('change', handleMediaChange);
       } else {
-        mediaQuery.removeListener(handleMediaChange);
+        mediaStandalone.removeListener(handleMediaChange);
+        mediaFullscreen.removeListener(handleMediaChange);
       }
     };
   }, []);

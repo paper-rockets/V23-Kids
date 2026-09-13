@@ -1,15 +1,33 @@
-﻿{
+{
+  "id": "clay-play-3d",
   "name": "Clay Play 3D — Kids Toy Painter",
   "short_name": "Clay Play 3D",
   "description": "A fun 3D toy painting and Play-Doh drawing studio for kids.",
   "start_url": "./",
   "scope": "./",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone", "minimal-ui", "window-controls-overlay"],
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "fullscreen"],
   "background_color": "#FAF6EF",
   "theme_color": "#FAF6EF",
   "orientation": "any",
+  "prefer_related_applications": false,
   "categories": ["graphics", "education", "kids", "entertainment"],
+  "screenshots": [
+    {
+      "src": "./screenshots/desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "3D Toy Painter Desktop View"
+    },
+    {
+      "src": "./screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "3D Toy Painter Mobile View"
+    }
+  ],
   "icons": [
     {
       "src": "./icons/icon-192.png",

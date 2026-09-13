@@ -373,6 +373,7 @@ export class KidsScene {
   private isOrbiting: boolean = false;
   private activePointers: Map<number, { x: number; y: number }> = new Map();
   private lastTouchDistance: number = 0;
+  private lastTouchMidpoint: { x: number; y: number } | null = null;
   private orbitTarget: THREE.Vector3 = new THREE.Vector3(0, 0.2, 0);
   private cameraRadius: number = 4.2;
   private targetCameraRadius: number = 4.2;
@@ -466,6 +467,22 @@ export class KidsScene {
     this.camera.position.y = this.orbitTarget.y + this.cameraRadius * cosPhi;
     this.camera.position.z = this.orbitTarget.z + this.cameraRadius * sinPhi * cosTheta;
     this.camera.lookAt(this.orbitTarget);
+  }
+
+  private cancelActiveStroke(): void {
+    if (this.activeStrokeMesh) {
+      this.strokesContainer.remove(this.activeStrokeMesh);
+      this.activeStrokeMesh.geometry.dispose();
+      if (Array.isArray(this.activeStrokeMesh.material)) {
+        this.activeStrokeMesh.material.forEach((m) => m.dispose());
+      } else {
+        this.activeStrokeMesh.material?.dispose();
+      }
+      this.activeStrokeMesh = null;
+    }
+    this.isDrawing = false;
+    this.activePoints = [];
+    this.activeNormals = [];
   }
 
   private setupLighting(): void {
@@ -720,11 +737,13 @@ export class KidsScene {
     const isMouse = e.pointerType === 'mouse';
     const isTouch = e.pointerType === 'touch';
 
-    // 1. Two fingers on touch -> Orbit and pinch-zoom the CAMERA
-    if (isTouch && this.activePointers.size === 2) {
+    // 1. Two or more fingers on touch -> cancel accidental dab and start orbiting + zooming
+    if (isTouch && this.activePointers.size >= 2) {
+      this.cancelActiveStroke();
       this.isOrbiting = true;
       const pts = Array.from(this.activePointers.values());
       this.lastTouchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      this.lastTouchMidpoint = { x: (pts[0].x + pts[1].x) * 0.5, y: (pts[0].y + pts[1].y) * 0.5 };
       return;
     }
 
@@ -755,16 +774,28 @@ export class KidsScene {
 
     if (this.isOrbiting) {
       this.updatePointerCoords(e);
-      if (this.activePointers.size === 2) {
+      if (this.activePointers.size >= 2) {
         const pts = Array.from(this.activePointers.values());
         const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        const curMid = { x: (pts[0].x + pts[1].x) * 0.5, y: (pts[0].y + pts[1].y) * 0.5 };
+
+        if (this.lastTouchMidpoint) {
+          const deltaMidX = curMid.x - this.lastTouchMidpoint.x;
+          const deltaMidY = curMid.y - this.lastTouchMidpoint.y;
+          // Dragging two fingers together orbits the camera!
+          this.targetCameraTheta -= deltaMidX * 0.009;
+          this.targetCameraPhi = Math.max(0.12, Math.min(Math.PI * 0.49, this.targetCameraPhi + deltaMidY * 0.007));
+        }
+
         if (this.lastTouchDistance > 0) {
           const pinchDelta = (this.lastTouchDistance - dist) * 0.008;
           this.targetCameraRadius = Math.max(2.2, Math.min(6.5, this.targetCameraRadius + pinchDelta));
         }
+
+        this.lastTouchMidpoint = curMid;
         this.lastTouchDistance = dist;
       } else {
-        // Orbit the CAMERA in spherical coordinates around the stationary toy
+        // Orbit the CAMERA in spherical coordinates around the stationary toy (mouse / single drag)
         this.targetCameraTheta -= deltaX * 0.008;
         this.targetCameraPhi = Math.max(0.12, Math.min(Math.PI * 0.49, this.targetCameraPhi + deltaY * 0.006));
       }
@@ -807,9 +838,13 @@ export class KidsScene {
   private onPointerUp(e: PointerEvent): void {
     this.activePointers.delete(e.pointerId);
 
+    if (this.activePointers.size < 2) {
+      this.lastTouchMidpoint = null;
+      this.lastTouchDistance = 0;
+    }
+
     if (this.activePointers.size === 0) {
       this.isOrbiting = false;
-      this.lastTouchDistance = 0;
     }
 
     if (this.isDrawing) {

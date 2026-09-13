@@ -21,6 +21,8 @@ import {
   Check,
   Search,
   RotateCcw,
+  Maximize,
+  Minimize,
 } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
@@ -37,6 +39,65 @@ export const KidsApp: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<KidsScene | null>(null);
   const { canInstall, isInstalled, promptInstall } = usePWAInstall();
+
+  // Full Screen State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const doc = document as any;
+      setIsFullscreen(
+        Boolean(
+          doc.fullscreenElement ||
+            doc.webkitFullscreenElement ||
+            doc.mozFullScreenElement ||
+            doc.msFullscreenElement
+        )
+      );
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const doc = document as any;
+    const docEl = document.documentElement as any;
+
+    if (
+      !doc.fullscreenElement &&
+      !doc.webkitFullscreenElement &&
+      !doc.mozFullScreenElement &&
+      !doc.msFullscreenElement
+    ) {
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+    } else {
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen().catch(() => {});
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen();
+      }
+    }
+  }, []);
 
   // Drawing & Tool States
   const [currentColor, setCurrentColor] = useState<string>('#FF3B30');
@@ -305,8 +366,21 @@ export const KidsApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Top-Right: Install (Purple), Camera (Green), Save (Blue), Toys (Red) */}
+        {/* Top-Right: Fullscreen (White), Install (Purple), Camera (Green), Save (Blue), Toys (Red) */}
         <div className="flex items-center gap-2.5 pointer-events-auto">
+          {/* Full Screen Toggle Button */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+            className="w-13 h-13 rounded-2xl bg-white hover:bg-neutral-100 text-black flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+          >
+            {isFullscreen ? (
+              <Minimize className="w-6 h-6 stroke-[2.5]" />
+            ) : (
+              <Maximize className="w-6 h-6 stroke-[2.5]" />
+            )}
+          </button>
+
           {/* PWA Install Button */}
           {!isInstalled && (
             <button
