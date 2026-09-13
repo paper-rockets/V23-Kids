@@ -22,6 +22,7 @@ import {
   Search,
   RotateCcw,
 } from 'lucide-react';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface SavedCreation {
   id: string;
@@ -35,6 +36,7 @@ interface SavedCreation {
 export const KidsApp: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<KidsScene | null>(null);
+  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
 
   // Drawing & Tool States
   const [currentColor, setCurrentColor] = useState<string>('#FF3B30');
@@ -302,8 +304,19 @@ export const KidsApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Top-Right: Camera (Green), Save (Blue), Toys (Red) from Image 1 */}
+        {/* Top-Right: Install (Purple), Camera (Green), Save (Blue), Toys (Red) */}
         <div className="flex items-center gap-2.5 pointer-events-auto">
+          {/* PWA Install Button */}
+          {!isInstalled && (
+            <button
+              onClick={promptInstall}
+              title="Install App to Home Screen"
+              className="w-13 h-13 rounded-2xl bg-[#9333EA] hover:bg-[#7E22CE] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            >
+              <Download className="w-6 h-6 stroke-[2.5]" />
+            </button>
+          )}
+
           {/* 1. Camera Snap Button (Green from Image 1) */}
           <button
             onClick={handleSnapDownload}

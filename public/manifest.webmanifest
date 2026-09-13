@@ -1,15 +1,15 @@
-{
-  "name": "Remix 3D — Draw and Paint in 3D",
-  "short_name": "Remix 3D",
-  "description": "A touch-first studio for drawing in 3D space and painting directly on 3D models.",
+﻿{
+  "name": "Clay Play 3D — Kids Toy Painter",
+  "short_name": "Clay Play 3D",
+  "description": "A fun 3D toy painting and Play-Doh drawing studio for kids.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone", "minimal-ui", "window-controls-overlay"],
-  "background_color": "#0c0e14",
-  "theme_color": "#0c0e14",
+  "background_color": "#FAF6EF",
+  "theme_color": "#FAF6EF",
   "orientation": "any",
-  "categories": ["graphics", "design", "productivity"],
+  "categories": ["graphics", "education", "kids", "entertainment"],
   "icons": [
     {
       "src": "./icons/icon-192.png",

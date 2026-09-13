@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
+          studio: path.resolve(__dirname, 'studio.html'),
           shaders: path.resolve(__dirname, 'shaders.html'),
           kids: path.resolve(__dirname, 'kids.html'),
         },
