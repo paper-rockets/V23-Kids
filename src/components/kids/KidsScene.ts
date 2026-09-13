@@ -4,6 +4,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { ALL_MATERIAL_PRESETS } from '../../presets/materialPresets';
+import { resolveAssetUrl } from '../../utils/assetUrl';
 
 // Install Three-Mesh-BVH for 100x accelerated raycasting
 if (!('computeBoundsTree' in THREE.BufferGeometry.prototype)) {
@@ -24,174 +25,174 @@ export const CUTE_TOY_MODELS: KidToyModel[] = [
   {
     id: 'capybara',
     name: 'Happy Capybaras',
-    file: '/models/two_happy_capybaras.glb',
+    file: 'models/two_happy_capybaras.glb',
     badge: '🐾',
   },
   // Pusheen collection
   {
     id: 'pusheen',
     name: 'Classic Pusheen',
-    file: '/models/pusheen.glb',
+    file: 'models/pusheen.glb',
     badge: '🐱',
   },
   {
     id: 'pusheen_noodles',
     name: 'Pusheen & Noodles',
-    file: '/models/pusheen_vs_noodle.glb',
+    file: 'models/pusheen_vs_noodle.glb',
     badge: '🍜',
   },
   {
     id: 'pusheen_baker',
     name: 'Baker Pusheen',
-    file: '/models/Meshy_AI_Pusheen_Baking_Magic_0913065316_texture.glb',
+    file: 'models/Meshy_AI_Pusheen_Baking_Magic_0913065316_texture.glb',
     badge: '🧁',
   },
   {
     id: 'pusheen_cake',
     name: 'Birthday Pusheen',
-    file: '/models/Meshy_AI_Pusheen_Cake_Celebrat_0913065248_texture.glb',
+    file: 'models/Meshy_AI_Pusheen_Cake_Celebrat_0913065248_texture.glb',
     badge: '🎂',
   },
   {
     id: 'pusheen_cool',
     name: 'Cool Pusheen',
-    file: '/models/Meshy_AI_Cool_Pusheen_0913045738_texture.glb',
+    file: 'models/Meshy_AI_Cool_Pusheen_0913045738_texture.glb',
     badge: '😎',
   },
   {
     id: 'pusheen_nurse',
     name: 'Nurse Pusheen',
-    file: '/models/Meshy_AI_Nurse_Pusheen_and_Tin_0913064519_texture.glb',
+    file: 'models/Meshy_AI_Nurse_Pusheen_and_Tin_0913064519_texture.glb',
     badge: '🩺',
   },
   // Sanrio favorites
   {
     id: 'kuromi',
     name: 'Kuromi',
-    file: '/models/KuromiV2_fixed-compressed.glb',
+    file: 'models/KuromiV2_fixed-compressed.glb',
     badge: '🖤',
   },
   {
     id: 'pompompurin',
     name: 'Pompompurin',
-    file: '/models/pom_pom_purin_1.glb',
+    file: 'models/pom_pom_purin_1.glb',
     badge: '🍮',
   },
   {
     id: 'cinnamoroll',
     name: 'Cinnamoroll',
-    file: '/models/cinnamoroll.glb',
+    file: 'models/cinnamoroll.glb',
     badge: '🐶',
   },
   // Fantasy Friends
   {
     id: 'axolotl',
     name: 'Pink Axolotl',
-    file: '/models/Meshy_AI_Cute_Pink_Axolotl_0913051211_texture.glb',
+    file: 'models/Meshy_AI_Cute_Pink_Axolotl_0913051211_texture.glb',
     badge: '🦎',
   },
   {
     id: 'dragon',
     name: 'Bubblegum Dragon',
-    file: '/models/Meshy_AI_Bubblegum_Dragon_0913050844_texture.glb',
+    file: 'models/Meshy_AI_Bubblegum_Dragon_0913050844_texture.glb',
     badge: '🐲',
   },
   {
     id: 'rainbow_monster',
     name: 'Rainbow Monster',
-    file: '/models/Meshy_AI_Rainbow_Plush_Monster_0913045931_texture.glb',
+    file: 'models/Meshy_AI_Rainbow_Plush_Monster_0913045931_texture.glb',
     badge: '🧸',
   },
   {
     id: 'prismatic_snail',
     name: 'Prismatic Snail',
-    file: '/models/Meshy_AI_Prismatic_Snail_0913050907_texture.glb',
+    file: 'models/Meshy_AI_Prismatic_Snail_0913050907_texture.glb',
     badge: '🐌',
   },
   // Pokemon
   {
     id: 'pikachu',
     name: 'Sparky Chu',
-    file: '/models/pikachuu.glb',
+    file: 'models/pikachuu.glb',
     badge: '⚡',
   },
   {
     id: 'bulbasaur',
     name: 'Bulbasaur',
-    file: '/models/bulbasaur_-_pokemon.glb',
+    file: 'models/bulbasaur_-_pokemon.glb',
     badge: '🍃',
   },
   {
     id: 'charmander',
     name: 'Charmander',
-    file: '/models/charmanderpokemon.glb',
+    file: 'models/charmanderpokemon.glb',
     badge: '🔥',
   },
   {
     id: 'squirtle',
     name: 'Squirtle',
-    file: '/models/squirtle.glb',
+    file: 'models/squirtle.glb',
     badge: '💧',
   },
   {
     id: 'charizard',
     name: 'Charizard',
-    file: '/models/charizardpokemon.glb',
+    file: 'models/charizardpokemon.glb',
     badge: '🐉',
   },
   {
     id: 'ninetales',
     name: 'Ninetales',
-    file: '/models/ninetalespokemon.glb',
+    file: 'models/ninetalespokemon.glb',
     badge: '🦊',
   },
   // Cute Kitties & Heroes
   {
     id: 'cat_magician',
     name: 'Tiny Cat Magician',
-    file: '/models/Meshy_AI_Tiny_Cat_Magician_0913064508_texture.glb',
+    file: 'models/Meshy_AI_Tiny_Cat_Magician_0913064508_texture.glb',
     badge: '🪄',
   },
   {
     id: 'nutella_cat',
     name: 'Nutella Cat',
-    file: '/models/Meshy_AI_Nutella_Cat_0913065234_texture.glb',
+    file: 'models/Meshy_AI_Nutella_Cat_0913065234_texture.glb',
     badge: '🍫',
   },
   {
     id: 'purrouette',
     name: 'Purrouette Ballerina',
-    file: '/models/Meshy_AI_Purrouette_0913065347_texture.glb',
+    file: 'models/Meshy_AI_Purrouette_0913065347_texture.glb',
     badge: '🩰',
   },
   {
     id: 'whisker_artist',
     name: 'Whisker Artist',
-    file: '/models/Meshy_AI_Whisker_Artist_0913064530_texture.glb',
+    file: 'models/Meshy_AI_Whisker_Artist_0913064530_texture.glb',
     badge: '🎨',
   },
   {
     id: 'scooter_cat',
     name: 'Scooter Cat',
-    file: '/models/Meshy_AI_Scooter_Cat_0913065304_texture.glb',
+    file: 'models/Meshy_AI_Scooter_Cat_0913065304_texture.glb',
     badge: '🛵',
   },
   {
     id: 'starry_snuggle',
     name: 'Starry Snuggle',
-    file: '/models/Meshy_AI_Starry_Snuggle_0913051226_texture.glb',
+    file: 'models/Meshy_AI_Starry_Snuggle_0913051226_texture.glb',
     badge: '⭐',
   },
   {
     id: 'baby_goku',
     name: 'Baby Goku Nimbus',
-    file: '/models/son_goku_and_kintoun_nimbus.glb',
+    file: 'models/son_goku_and_kintoun_nimbus.glb',
     badge: '☁️',
   },
   {
     id: 'foxy',
     name: 'Foxy Lankybox',
-    file: '/models/foxy_lankybox.glb',
+    file: 'models/foxy_lankybox.glb',
     badge: '🦊',
   },
 ];
@@ -428,7 +429,7 @@ export class KidsScene {
     // 7. GLTF Loader with Draco
     this.loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
+    dracoLoader.setDecoderPath(resolveAssetUrl('draco/gltf/'));
     this.loader.setDRACOLoader(dracoLoader);
     (this.raycaster as any).firstHitOnly = true;
 
@@ -518,7 +519,7 @@ export class KidsScene {
 
     if (preset.url) {
       const loader = new THREE.TextureLoader();
-      const texture = loader.load(preset.url);
+      const texture = loader.load(resolveAssetUrl(preset.url));
       texture.colorSpace = THREE.SRGBColorSpace;
       return new THREE.MeshMatcapMaterial({ matcap: texture, side: THREE.DoubleSide });
     }
@@ -603,9 +604,11 @@ export class KidsScene {
     this.onLoadingChange?.(true, 'Loading cute toy...');
     this.clearAllStrokes();
 
+    const targetUrl = resolveAssetUrl(url);
+
     return new Promise((resolve, reject) => {
       this.loader.load(
-        url,
+        targetUrl,
         (gltf) => {
           const toRemove: THREE.Object3D[] = [];
           this.modelContainer.children.forEach((child) => {
