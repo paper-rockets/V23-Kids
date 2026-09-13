@@ -369,12 +369,17 @@ export class KidsScene {
   private pointerPos: THREE.Vector2 = new THREE.Vector2();
   private currentDrawingDepth: number = 4.2;
 
-  // Touch orbit state
+  // Spherical Camera Orbit State (Camera moves, 3D model stays stationary)
   private isOrbiting: boolean = false;
   private activePointers: Map<number, { x: number; y: number }> = new Map();
   private lastTouchDistance: number = 0;
-  private targetRotationY: number = 0;
-  private targetRotationX: number = 0.05;
+  private orbitTarget: THREE.Vector3 = new THREE.Vector3(0, 0.2, 0);
+  private cameraRadius: number = 4.2;
+  private targetCameraRadius: number = 4.2;
+  private cameraTheta: number = 0;
+  private targetCameraTheta: number = 0;
+  private cameraPhi: number = Math.PI * 0.44;
+  private targetCameraPhi: number = Math.PI * 0.44;
   public isAutoSpinning: boolean = false;
 
   // Shader uniforms
@@ -397,8 +402,7 @@ export class KidsScene {
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
     this.camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    this.camera.position.set(0, 0.8, 4.2);
-    this.camera.lookAt(0, 0.2, 0);
+    this.updateCameraPosition(false);
 
     // 3. Renderer
     this.renderer = new THREE.WebGLRenderer({
@@ -437,8 +441,31 @@ export class KidsScene {
     this.bindEvents();
 
     // 9. Start Animation Loop
+    this.updateCameraPosition(false);
     this.animate = this.animate.bind(this);
     this.animate();
+  }
+
+  private updateCameraPosition(smooth: boolean = true): void {
+    if (smooth) {
+      this.cameraTheta += (this.targetCameraTheta - this.cameraTheta) * 0.14;
+      this.cameraPhi += (this.targetCameraPhi - this.cameraPhi) * 0.14;
+      this.cameraRadius += (this.targetCameraRadius - this.cameraRadius) * 0.14;
+    } else {
+      this.cameraTheta = this.targetCameraTheta;
+      this.cameraPhi = this.targetCameraPhi;
+      this.cameraRadius = this.targetCameraRadius;
+    }
+
+    const sinPhi = Math.sin(this.cameraPhi);
+    const cosPhi = Math.cos(this.cameraPhi);
+    const sinTheta = Math.sin(this.cameraTheta);
+    const cosTheta = Math.cos(this.cameraTheta);
+
+    this.camera.position.x = this.orbitTarget.x + this.cameraRadius * sinPhi * sinTheta;
+    this.camera.position.y = this.orbitTarget.y + this.cameraRadius * cosPhi;
+    this.camera.position.z = this.orbitTarget.z + this.cameraRadius * sinPhi * cosTheta;
+    this.camera.lookAt(this.orbitTarget);
   }
 
   private setupLighting(): void {
@@ -652,9 +679,8 @@ export class KidsScene {
           });
 
           this.modelContainer.add(model);
-          this.modelContainer.rotation.set(0.05, 0, 0);
-          this.targetRotationY = 0;
-          this.targetRotationX = 0.05;
+          this.modelContainer.rotation.set(0, 0, 0);
+          this.resetView();
           this.isAutoSpinning = false;
           this.onLoadingChange?.(false);
           resolve();
@@ -694,7 +720,7 @@ export class KidsScene {
     const isMouse = e.pointerType === 'mouse';
     const isTouch = e.pointerType === 'touch';
 
-    // 1. Two fingers on touch -> Orbit and pinch-zoom
+    // 1. Two fingers on touch -> Orbit and pinch-zoom the CAMERA
     if (isTouch && this.activePointers.size === 2) {
       this.isOrbiting = true;
       const pts = Array.from(this.activePointers.values());
@@ -702,28 +728,21 @@ export class KidsScene {
       return;
     }
 
-    // 2. Right-click, middle-click, or Shift-drag: Orbit
+    // 2. Right-click, middle-click, or Shift-drag: Orbit the CAMERA
     if (isMouse && (e.button === 2 || e.button === 1 || e.shiftKey)) {
       this.isOrbiting = true;
       return;
     }
 
-    // 3. Raycast against the 3D toy model
-    const hit = this.raycastModel();
+    // 3. Left-click, Stylus, or single-finger touch: DRAW (on model surface + in 3D air)!
+    if (isStylus || (isMouse && e.button === 0) || (isTouch && this.activePointers.size === 1)) {
+      if (this.isEraser) {
+        this.handleErase();
+        return;
+      }
 
-    // If pointer is NOT on the toy: Orbit the camera/view!
-    if (!hit) {
-      this.isOrbiting = true;
-      return;
+      this.startStrokeAtCurrentPointer();
     }
-
-    // If pointer IS on the 3D toy: Paint or Erase!
-    if (this.isEraser) {
-      this.handleErase();
-      return;
-    }
-
-    this.startStrokeAtCurrentPointer(hit);
   }
 
   private onPointerMove(e: PointerEvent): void {
@@ -740,13 +759,14 @@ export class KidsScene {
         const pts = Array.from(this.activePointers.values());
         const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
         if (this.lastTouchDistance > 0) {
-          const pinchDelta = (this.lastTouchDistance - dist) * 0.006;
-          this.camera.position.z = Math.max(2.4, Math.min(6.5, this.camera.position.z + pinchDelta));
+          const pinchDelta = (this.lastTouchDistance - dist) * 0.008;
+          this.targetCameraRadius = Math.max(2.2, Math.min(6.5, this.targetCameraRadius + pinchDelta));
         }
         this.lastTouchDistance = dist;
       } else {
-        this.targetRotationY += deltaX * 0.009;
-        this.targetRotationX = Math.max(-0.45, Math.min(0.45, this.targetRotationX + deltaY * 0.006));
+        // Orbit the CAMERA in spherical coordinates around the stationary toy
+        this.targetCameraTheta -= deltaX * 0.008;
+        this.targetCameraPhi = Math.max(0.12, Math.min(Math.PI * 0.49, this.targetCameraPhi + deltaY * 0.006));
       }
       return;
     }
@@ -799,7 +819,7 @@ export class KidsScene {
 
   private onWheel(e: WheelEvent): void {
     e.preventDefault();
-    this.camera.position.z = Math.max(2.4, Math.min(6.5, this.camera.position.z + e.deltaY * 0.002));
+    this.targetCameraRadius = Math.max(2.2, Math.min(6.5, this.targetCameraRadius + e.deltaY * 0.002));
   }
 
   private raycastModel(): THREE.Intersection | null {
@@ -826,13 +846,7 @@ export class KidsScene {
 
   // --- Stroke Building: Filled 3D Tubes & Conformal Flat Permanent Marker ---
 
-  private startStrokeAtCurrentPointer(hit?: THREE.Intersection | null): void {
-    const targetHit = hit || this.raycastModel();
-    if (!targetHit) {
-      this.isDrawing = false;
-      return;
-    }
-
+  private startStrokeAtCurrentPointer(): void {
     this.isDrawing = true;
     this.activePoints = [];
     this.activeNormals = [];
@@ -840,16 +854,34 @@ export class KidsScene {
     const radius = this.getRadius();
     const invQuat = this.modelContainer.quaternion.clone().invert();
 
-    this.currentDrawingDepth = targetHit.distance;
-    const worldNormal = (targetHit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
-    worldNormal.transformDirection(targetHit.object.matrixWorld).normalize();
-    const localNormal = worldNormal.applyQuaternion(invQuat).normalize();
+    const hit = this.raycastModel();
+    let localPoint: THREE.Vector3;
+    let localNormal: THREE.Vector3;
 
-    const lp = this.modelContainer.worldToLocal(targetHit.point.clone());
-    const localPoint =
-      this.strokeStyle === '3d_tube'
-        ? lp.clone().addScaledVector(localNormal, radius * 0.55)
-        : lp.clone().addScaledVector(localNormal, 0.007);
+    if (hit) {
+      this.currentDrawingDepth = hit.distance;
+      const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
+      worldNormal.transformDirection(hit.object.matrixWorld).normalize();
+      localNormal = worldNormal.applyQuaternion(invQuat).normalize();
+
+      const lp = this.modelContainer.worldToLocal(hit.point.clone());
+      localPoint =
+        this.strokeStyle === '3d_tube'
+          ? lp.clone().addScaledVector(localNormal, radius * 0.55)
+          : lp.clone().addScaledVector(localNormal, 0.007);
+    } else {
+      // Spatial 3D air drawing at currentDrawingDepth!
+      this.raycaster.setFromCamera(this.pointerPos, this.camera);
+      const worldAir = this.raycaster.ray.origin
+        .clone()
+        .addScaledVector(this.raycaster.ray.direction, this.currentDrawingDepth);
+      localPoint = this.modelContainer.worldToLocal(worldAir);
+      localNormal = this.camera
+        .getWorldDirection(new THREE.Vector3())
+        .negate()
+        .applyQuaternion(invQuat)
+        .normalize();
+    }
 
     this.activePoints.push(localPoint);
     this.activeNormals.push(localNormal);
@@ -874,24 +906,37 @@ export class KidsScene {
   private addPointerSample(): boolean {
     if (!this.isDrawing) return false;
 
-    const hit = this.raycastModel();
-    if (!hit) {
-      return false;
-    }
-
     const radius = this.getRadius();
     const invQuat = this.modelContainer.quaternion.clone().invert();
 
-    this.currentDrawingDepth = hit.distance;
-    const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
-    worldNormal.transformDirection(hit.object.matrixWorld).normalize();
-    const normal = worldNormal.applyQuaternion(invQuat).normalize();
+    const hit = this.raycastModel();
+    let point: THREE.Vector3;
+    let normal: THREE.Vector3;
 
-    const lp = this.modelContainer.worldToLocal(hit.point.clone());
-    const point =
-      this.strokeStyle === '3d_tube'
-        ? lp.clone().addScaledVector(normal, radius * 0.55)
-        : lp.clone().addScaledVector(normal, 0.007);
+    if (hit) {
+      this.currentDrawingDepth = hit.distance;
+      const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
+      worldNormal.transformDirection(hit.object.matrixWorld).normalize();
+      normal = worldNormal.applyQuaternion(invQuat).normalize();
+
+      const lp = this.modelContainer.worldToLocal(hit.point.clone());
+      point =
+        this.strokeStyle === '3d_tube'
+          ? lp.clone().addScaledVector(normal, radius * 0.55)
+          : lp.clone().addScaledVector(normal, 0.007);
+    } else {
+      // Spatial 3D air point
+      this.raycaster.setFromCamera(this.pointerPos, this.camera);
+      const worldAir = this.raycaster.ray.origin
+        .clone()
+        .addScaledVector(this.raycaster.ray.direction, this.currentDrawingDepth);
+      point = this.modelContainer.worldToLocal(worldAir);
+      normal = this.camera
+        .getWorldDirection(new THREE.Vector3())
+        .negate()
+        .applyQuaternion(invQuat)
+        .normalize();
+    }
 
     if (this.activePoints.length > 0) {
       const lastPoint = this.activePoints[this.activePoints.length - 1];
@@ -1192,22 +1237,20 @@ export class KidsScene {
   }
 
   public resetView(): void {
-    this.targetRotationY = 0;
-    this.targetRotationX = 0.05;
+    this.targetCameraTheta = 0;
+    this.targetCameraPhi = Math.PI * 0.44;
+    this.targetCameraRadius = 4.2;
     this.isAutoSpinning = false;
-    this.camera.position.set(0, 0.8, 4.2);
-    this.camera.lookAt(0, 0.2, 0);
   }
 
   public rotateToy(deltaYaw: number, deltaPitch: number): void {
-    this.targetRotationY += deltaYaw;
-    this.targetRotationX = Math.max(-0.45, Math.min(0.45, this.targetRotationX + deltaPitch));
+    this.targetCameraTheta += deltaYaw;
+    this.targetCameraPhi = Math.max(0.12, Math.min(Math.PI * 0.49, this.targetCameraPhi + deltaPitch));
     this.isAutoSpinning = false;
   }
 
   public zoomCamera(deltaZoom: number): void {
-    const newZ = Math.max(2.4, Math.min(6.5, this.camera.position.z + deltaZoom));
-    this.camera.position.z = newZ;
+    this.targetCameraRadius = Math.max(2.2, Math.min(6.5, this.targetCameraRadius + deltaZoom));
   }
 
   public toggleAutoSpin(): boolean {
@@ -1234,11 +1277,14 @@ export class KidsScene {
     const time = this.clock.getElapsedTime();
 
     if (this.isAutoSpinning && !this.isOrbiting && !this.isDrawing) {
-      this.targetRotationY += 0.005;
+      this.targetCameraTheta += 0.005;
     }
 
-    this.modelContainer.rotation.y += (this.targetRotationY - this.modelContainer.rotation.y) * 0.12;
-    this.modelContainer.rotation.x += (this.targetRotationX - this.modelContainer.rotation.x) * 0.12;
+    // Move camera around stationary toy
+    this.updateCameraPosition(true);
+
+    // Keep model stationary at 0, 0, 0
+    this.modelContainer.rotation.set(0, 0, 0);
 
     for (let i = 0; i < this.animatedUniforms.length; i++) {
       const u = this.animatedUniforms[i];
