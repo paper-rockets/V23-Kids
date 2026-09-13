@@ -141,6 +141,7 @@ export const KidsApp: React.FC = () => {
 
   const handleClearAll = useCallback(() => {
     sceneRef.current?.clearAllStrokes();
+    setStrokeCount(0);
   }, []);
 
   const handleResetView = useCallback(() => {
@@ -369,6 +370,7 @@ export const KidsApp: React.FC = () => {
         onToggleStrokeStyle={setStrokeStyle}
         onOpenToyGallery={() => setShowToyGallery(true)}
         onUndo={handleUndo}
+        onClearAll={handleClearAll}
         canUndo={strokeCount > 0}
       />
 

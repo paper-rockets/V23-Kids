@@ -694,33 +694,36 @@ export class KidsScene {
     const isMouse = e.pointerType === 'mouse';
     const isTouch = e.pointerType === 'touch';
 
-    // Touch: 1 or 2 fingers orbit the toy
-    if (isTouch) {
-      if (this.activePointers.size === 1) {
-        this.isOrbiting = true;
-      } else if (this.activePointers.size === 2) {
-        this.isOrbiting = true;
-        const pts = Array.from(this.activePointers.values());
-        this.lastTouchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      }
+    // 1. Two fingers on touch -> Orbit and pinch-zoom
+    if (isTouch && this.activePointers.size === 2) {
+      this.isOrbiting = true;
+      const pts = Array.from(this.activePointers.values());
+      this.lastTouchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       return;
     }
 
-    // Right-click or middle-click or Shift-drag: Orbit
+    // 2. Right-click, middle-click, or Shift-drag: Orbit
     if (isMouse && (e.button === 2 || e.button === 1 || e.shiftKey)) {
       this.isOrbiting = true;
       return;
     }
 
-    // Left-click or Stylus: DRAW! (On model or spatial 3D in the air!)
-    if (isStylus || (isMouse && e.button === 0)) {
-      if (this.isEraser) {
-        this.handleErase();
-        return;
-      }
+    // 3. Raycast against the 3D toy model
+    const hit = this.raycastModel();
 
-      this.startStrokeAtCurrentPointer();
+    // If pointer is NOT on the toy: Orbit the camera/view!
+    if (!hit) {
+      this.isOrbiting = true;
+      return;
     }
+
+    // If pointer IS on the 3D toy: Paint or Erase!
+    if (this.isEraser) {
+      this.handleErase();
+      return;
+    }
+
+    this.startStrokeAtCurrentPointer(hit);
   }
 
   private onPointerMove(e: PointerEvent): void {
@@ -743,8 +746,14 @@ export class KidsScene {
         this.lastTouchDistance = dist;
       } else {
         this.targetRotationY += deltaX * 0.009;
-        this.targetRotationX = Math.max(-0.25, Math.min(0.28, this.targetRotationX + deltaY * 0.006));
+        this.targetRotationX = Math.max(-0.45, Math.min(0.45, this.targetRotationX + deltaY * 0.006));
       }
+      return;
+    }
+
+    if (this.isEraser) {
+      this.updatePointerCoords(e);
+      this.handleErase();
       return;
     }
 
@@ -817,7 +826,13 @@ export class KidsScene {
 
   // --- Stroke Building: Filled 3D Tubes & Conformal Flat Permanent Marker ---
 
-  private startStrokeAtCurrentPointer(): void {
+  private startStrokeAtCurrentPointer(hit?: THREE.Intersection | null): void {
+    const targetHit = hit || this.raycastModel();
+    if (!targetHit) {
+      this.isDrawing = false;
+      return;
+    }
+
     this.isDrawing = true;
     this.activePoints = [];
     this.activeNormals = [];
@@ -825,34 +840,16 @@ export class KidsScene {
     const radius = this.getRadius();
     const invQuat = this.modelContainer.quaternion.clone().invert();
 
-    const hit = this.raycastModel();
-    let localPoint: THREE.Vector3;
-    let localNormal: THREE.Vector3;
+    this.currentDrawingDepth = targetHit.distance;
+    const worldNormal = (targetHit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
+    worldNormal.transformDirection(targetHit.object.matrixWorld).normalize();
+    const localNormal = worldNormal.applyQuaternion(invQuat).normalize();
 
-    if (hit) {
-      this.currentDrawingDepth = hit.distance;
-      const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
-      worldNormal.transformDirection(hit.object.matrixWorld).normalize();
-      localNormal = worldNormal.applyQuaternion(invQuat).normalize();
-
-      const lp = this.modelContainer.worldToLocal(hit.point.clone());
-      localPoint =
-        this.strokeStyle === '3d_tube'
-          ? lp.clone().addScaledVector(localNormal, radius * 0.55)
-          : lp.clone().addScaledVector(localNormal, 0.007);
-    } else {
-      // Spatial 3D air drawing at currentDrawingDepth!
-      this.raycaster.setFromCamera(this.pointerPos, this.camera);
-      const worldAir = this.raycaster.ray.origin
-        .clone()
-        .addScaledVector(this.raycaster.ray.direction, this.currentDrawingDepth);
-      localPoint = this.modelContainer.worldToLocal(worldAir);
-      localNormal = this.camera
-        .getWorldDirection(new THREE.Vector3())
-        .negate()
-        .applyQuaternion(invQuat)
-        .normalize();
-    }
+    const lp = this.modelContainer.worldToLocal(targetHit.point.clone());
+    const localPoint =
+      this.strokeStyle === '3d_tube'
+        ? lp.clone().addScaledVector(localNormal, radius * 0.55)
+        : lp.clone().addScaledVector(localNormal, 0.007);
 
     this.activePoints.push(localPoint);
     this.activeNormals.push(localNormal);
@@ -877,37 +874,24 @@ export class KidsScene {
   private addPointerSample(): boolean {
     if (!this.isDrawing) return false;
 
+    const hit = this.raycastModel();
+    if (!hit) {
+      return false;
+    }
+
     const radius = this.getRadius();
     const invQuat = this.modelContainer.quaternion.clone().invert();
 
-    const hit = this.raycastModel();
-    let point: THREE.Vector3;
-    let normal: THREE.Vector3;
+    this.currentDrawingDepth = hit.distance;
+    const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
+    worldNormal.transformDirection(hit.object.matrixWorld).normalize();
+    const normal = worldNormal.applyQuaternion(invQuat).normalize();
 
-    if (hit) {
-      this.currentDrawingDepth = hit.distance;
-      const worldNormal = (hit.face?.normal || new THREE.Vector3(0, 1, 0)).clone();
-      worldNormal.transformDirection(hit.object.matrixWorld).normalize();
-      normal = worldNormal.applyQuaternion(invQuat).normalize();
-
-      const lp = this.modelContainer.worldToLocal(hit.point.clone());
-      point =
-        this.strokeStyle === '3d_tube'
-          ? lp.clone().addScaledVector(normal, radius * 0.55)
-          : lp.clone().addScaledVector(normal, 0.007);
-    } else {
-      // Spatial 3D air point
-      this.raycaster.setFromCamera(this.pointerPos, this.camera);
-      const worldAir = this.raycaster.ray.origin
-        .clone()
-        .addScaledVector(this.raycaster.ray.direction, this.currentDrawingDepth);
-      point = this.modelContainer.worldToLocal(worldAir);
-      normal = this.camera
-        .getWorldDirection(new THREE.Vector3())
-        .negate()
-        .applyQuaternion(invQuat)
-        .normalize();
-    }
+    const lp = this.modelContainer.worldToLocal(hit.point.clone());
+    const point =
+      this.strokeStyle === '3d_tube'
+        ? lp.clone().addScaledVector(normal, radius * 0.55)
+        : lp.clone().addScaledVector(normal, 0.007);
 
     if (this.activePoints.length > 0) {
       const lastPoint = this.activePoints[this.activePoints.length - 1];
@@ -1179,8 +1163,31 @@ export class KidsScene {
   }
 
   public clearAllStrokes(): void {
+    if (this.activeStrokeMesh) {
+      this.strokesContainer.remove(this.activeStrokeMesh);
+      this.activeStrokeMesh.geometry.dispose();
+      if (Array.isArray(this.activeStrokeMesh.material)) {
+        this.activeStrokeMesh.material.forEach((m) => m.dispose());
+      } else {
+        this.activeStrokeMesh.material.dispose();
+      }
+      this.activeStrokeMesh = null;
+    }
     this.strokeHistory.forEach((s) => s.dispose());
     this.strokeHistory = [];
+    while (this.strokesContainer.children.length > 0) {
+      const child = this.strokesContainer.children[0] as THREE.Mesh;
+      this.strokesContainer.remove(child);
+      child.geometry?.dispose();
+      if (Array.isArray(child.material)) {
+        child.material.forEach((m) => m.dispose());
+      } else {
+        child.material?.dispose();
+      }
+    }
+    this.isDrawing = false;
+    this.activePoints = [];
+    this.activeNormals = [];
     this.onStrokeCountChange?.(0);
   }
 
@@ -1194,7 +1201,7 @@ export class KidsScene {
 
   public rotateToy(deltaYaw: number, deltaPitch: number): void {
     this.targetRotationY += deltaYaw;
-    this.targetRotationX = Math.max(-0.25, Math.min(0.28, this.targetRotationX + deltaPitch));
+    this.targetRotationX = Math.max(-0.45, Math.min(0.45, this.targetRotationX + deltaPitch));
     this.isAutoSpinning = false;
   }
 
