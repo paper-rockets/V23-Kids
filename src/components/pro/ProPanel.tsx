@@ -1,0 +1,266 @@
+import React, { useRef } from 'react';
+import { ProMode, closeSheet, useOpenSheet } from '../studio/panelStore';
+import { useDismissibleSurface } from '../../hooks/useDismissibleSurface';
+import { StudioCloseButton } from '../common/StudioCloseButton';
+import { haptics } from '../../utils/haptics';
+import { SelectPanel } from './SelectPanel';
+import { DrawPanel } from './DrawPanel';
+import { CreatePanel } from './CreatePanel';
+import { DeformPanel } from './DeformPanel';
+import { LayerPanel } from '../LayerPanel';
+import { StudioEngine } from '../../core/studioEngine';
+import './ProResponsive.css';
+import {
+  ToolType,
+  BrushSettings,
+  TransformTargetScope,
+  NumpadTarget,
+  ModelDisplayMode,
+  LiquifySettings,
+  Layer,
+  ActiveGuideReference,
+} from '../../types';
+
+export interface ProPanelProps {
+  engine?: StudioEngine | null;
+  tool?: ToolType;
+  setTool?: (tool: ToolType) => void;
+  brushSettings?: BrushSettings;
+  setBrushSettings?: React.Dispatch<React.SetStateAction<BrushSettings>>;
+  isGizmoActive?: boolean;
+  onToggleGizmo?: () => void;
+  isGizmoLocked?: boolean;
+  onToggleLock?: () => void;
+  onOpenNumpad?: (target: NumpadTarget) => void;
+  onOpenColorStudio?: () => void;
+  activeModelName?: string;
+  modelDisplayMode?: ModelDisplayMode;
+  onSetModelDisplayMode?: (mode: ModelDisplayMode) => void;
+  onOpenModelLibrary?: () => void;
+  onOpenImporter?: () => void;
+  targetScope?: TransformTargetScope;
+  onSelectTargetScope?: (scope: TransformTargetScope) => void;
+  onGizmoReset?: () => void;
+  // Deform Mode props
+  liquifySettings?: LiquifySettings;
+  setLiquifySettings?: (settings: LiquifySettings) => void;
+  isLiquifyOpen?: boolean;
+  onOpenLiquify?: () => void;
+  isCompareActive?: boolean;
+  onToggleCompare?: (active: boolean) => void;
+  onApplyLiquify?: () => void;
+  onCancelLiquify?: () => void;
+  onOpenScaffolding?: () => void;
+  onOpenBentGuide?: () => void;
+  onOpenCustomMirror?: () => void;
+  onOpenDecimate?: () => void;
+  // Layers Mode props
+  layers?: Layer[];
+  setLayers?: React.Dispatch<React.SetStateAction<Layer[]>>;
+  activeLayerId?: string;
+  setActiveLayerId?: (id: string) => void;
+  onClearLayerStrokes?: (layerId: string) => void;
+  onMergeLayerDown?: (layerId: string) => void;
+  onBeforeDestructiveAction?: (title: string, description: string, actionLabel: string, action: () => Promise<void> | void) => void;
+  activeGuide?: ActiveGuideReference | null;
+  theme?: 'light' | 'dark';
+}
+
+const MODE_TITLES: Record<ProMode, string> = {
+  select: 'Select',
+  draw: 'Draw',
+  create: 'Add',
+  deform: 'Deform',
+  layers: 'Layers',
+};
+
+export const ProPanel: React.FC<ProPanelProps> = ({
+  engine = null,
+  tool = 'brush',
+  setTool = () => {},
+  brushSettings,
+  setBrushSettings = () => {},
+  isGizmoActive = true,
+  onToggleGizmo = () => {},
+  isGizmoLocked = false,
+  onToggleLock = () => {},
+  onOpenNumpad,
+  onOpenColorStudio,
+  activeModelName = 'Default Model',
+  modelDisplayMode = 'texture',
+  onSetModelDisplayMode = () => {},
+  onOpenModelLibrary = () => {},
+  onOpenImporter = () => {},
+  targetScope = 'all',
+  onSelectTargetScope = () => {},
+  onGizmoReset,
+  liquifySettings,
+  setLiquifySettings,
+  isLiquifyOpen,
+  onOpenLiquify,
+  isCompareActive,
+  onToggleCompare,
+  onApplyLiquify,
+  onCancelLiquify,
+  onOpenScaffolding,
+  onOpenBentGuide,
+  onOpenCustomMirror,
+  onOpenDecimate,
+  layers,
+  setLayers,
+  activeLayerId,
+  setActiveLayerId,
+  onClearLayerStrokes,
+  onMergeLayerDown,
+  onBeforeDestructiveAction,
+  theme = 'dark',
+}) => {
+  const openSheet = useOpenSheet();
+  const light = theme === 'light';
+
+  // Only render if a ProMode is active
+  const isProMode =
+    openSheet === 'select' ||
+    openSheet === 'draw' ||
+    openSheet === 'create' ||
+    openSheet === 'deform' ||
+    openSheet === 'layers';
+
+  const panelRef = useRef<HTMLElement | null>(null);
+  useDismissibleSurface({
+    isOpen: isProMode,
+    onClose: closeSheet,
+    surfaceRef: panelRef,
+    ignoreSelector: '[data-pro-rail-button]',
+  });
+
+  if (!isProMode || !openSheet) return null;
+
+  const mode = openSheet as ProMode;
+  const title = MODE_TITLES[mode] ?? mode;
+
+  return (
+    <>
+      {/* Outside click/tap dismiss backdrop */}
+      <div
+        className="paperrocket-context-backdrop fixed inset-0 z-30 bg-black/20 sm:bg-black/10 animate-in fade-in duration-150 pointer-events-auto"
+        onClick={() => {
+          haptics.trigger('light');
+          closeSheet();
+        }}
+        aria-hidden="true"
+      />
+      <aside
+        ref={panelRef}
+        role="region"
+        aria-label={`${title} Panel`}
+      data-theme={theme}
+      className={`paperrocket-pro-panel paperrocket-context-panel fixed z-40 select-none flex flex-col border shadow-2xl animate-in fade-in duration-150 overflow-hidden ${
+        light
+          ? 'bg-[#f7f4ee]/98 border-black/15 text-neutral-800 shadow-[0_20px_50px_rgba(35,28,20,0.14)]'
+          : 'bg-[#14161a]/98 border-white/15 text-neutral-200 shadow-[0_24px_70px_rgba(0,0,0,0.6)]'
+      }`}
+    >
+      {/* Header - Sticky at top so close button is ALWAYS reachable */}
+      <div
+        className={`flex items-center justify-between px-3.5 py-2 border-b min-h-[40px] shrink-0 sticky top-0 z-10 ${
+          light ? 'border-black/10 bg-[#f7f4ee]' : 'border-white/10 bg-[#14161a]'
+        }`}
+      >
+        <h2 className="text-xs font-bold uppercase tracking-wider text-current">{title}</h2>
+        <StudioCloseButton
+          onClick={() => {
+            haptics.trigger('light');
+            closeSheet();
+          }}
+          ariaLabel={`Close ${title} Panel`}
+          title="Close Panel"
+          theme={theme}
+          size="sm"
+        />
+      </div>
+
+      {/* Body / Placeholders - Scrollable without pushing header off-screen */}
+      <div className="paperrocket-pro-content min-h-0 flex-1 p-2.5 overflow-y-auto studio-scroll">
+        {mode === 'select' && brushSettings && (
+          <SelectPanel
+            engine={engine}
+            tool={tool}
+            setTool={setTool}
+            brushSettings={brushSettings}
+            setBrushSettings={setBrushSettings}
+            isGizmoActive={isGizmoActive}
+            onToggleGizmo={onToggleGizmo}
+            isGizmoLocked={isGizmoLocked}
+            onToggleLock={onToggleLock}
+            onOpenNumpad={onOpenNumpad}
+            targetScope={targetScope}
+            onSelectTargetScope={onSelectTargetScope}
+            onGizmoReset={onGizmoReset}
+            theme={theme}
+          />
+        )}
+        {mode === 'draw' && brushSettings && (
+          <DrawPanel
+            engine={engine}
+            brushSettings={brushSettings}
+            setBrushSettings={setBrushSettings}
+            onOpenColorStudio={() => {
+              closeSheet();
+              onOpenColorStudio?.();
+            }}
+            theme={theme}
+          />
+        )}
+        {mode === 'create' && (
+          <CreatePanel
+            engine={engine}
+            activeModelName={activeModelName}
+            modelDisplayMode={modelDisplayMode}
+            onSetModelDisplayMode={onSetModelDisplayMode}
+            onOpenModelLibrary={onOpenModelLibrary}
+            onOpenImporter={onOpenImporter}
+            onOpenScaffolding={onOpenScaffolding}
+            onOpenBentGuide={onOpenBentGuide}
+            theme={theme}
+          />
+        )}
+        {mode === 'deform' && (
+          <DeformPanel
+            engine={engine}
+            tool={tool}
+            setTool={setTool}
+            liquifySettings={liquifySettings}
+            setLiquifySettings={setLiquifySettings}
+            isLiquifyOpen={isLiquifyOpen}
+            onOpenLiquify={onOpenLiquify}
+            isCompareActive={isCompareActive}
+            onToggleCompare={onToggleCompare}
+            onApplyLiquify={onApplyLiquify}
+            onCancelLiquify={onCancelLiquify}
+            onOpenScaffolding={onOpenScaffolding}
+            onOpenBentGuide={onOpenBentGuide}
+            onOpenCustomMirror={onOpenCustomMirror}
+            onOpenDecimate={onOpenDecimate}
+            onOpenNumpad={onOpenNumpad}
+            theme={theme}
+          />
+        )}
+        {mode === 'layers' && layers && setLayers && activeLayerId && setActiveLayerId && (
+          <LayerPanel
+            layers={layers}
+            setLayers={setLayers}
+            activeLayerId={activeLayerId}
+            setActiveLayerId={setActiveLayerId}
+            onClearLayerStrokes={onClearLayerStrokes || (() => {})}
+            onMergeLayerDown={onMergeLayerDown}
+            onBeforeDestructiveAction={onBeforeDestructiveAction}
+            inline={true}
+            theme={theme}
+          />
+        )}
+      </div>
+    </aside>
+  </>
+);
+};

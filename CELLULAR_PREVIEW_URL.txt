@@ -1,0 +1,20 @@
+﻿=============================================================
+REMIX 3D STUDIO - LIVE DEMO & PREVIEW LINKS (V22)
+=============================================================
+
+1. PUBLIC LIVE DEMO (GitHub Pages - worldwide, no local server needed):
+   https://paper-rockets.github.io/V22/
+
+2. PUBLIC CELLULAR TUNNEL (Cloudflare - live from your computer):
+   https://chemistry-coalition-tutorial-grades.trycloudflare.com
+   Phone mode: https://chemistry-coalition-tutorial-grades.trycloudflare.com/?device=s25ultra
+   Tablet mode: https://chemistry-coalition-tutorial-grades.trycloudflare.com/?device=s6lite
+
+3. AT HOME (On same Wi-Fi):
+   http://192.168.0.22:5174
+
+4. ON THIS COMPUTER:
+   http://localhost:5174
+
+Port: 5174
+=============================================================

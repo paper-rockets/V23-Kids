@@ -1,0 +1,276 @@
+/* Mobile-first Studio shell. The protected 3D axis gizmo is intentionally untouched. */
+
+#mody-autosave-indicator { display: none !important; }
+
+/* Retired duplicate navigation pod. The axis gizmo and native gestures remain. */
+#viewport-camera-control-pod,
+#viewport-nav-pod-wakeup { display: none !important; }
+
+.paperrocket-studio-rail {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  padding: 0;
+  transform: none;
+  pointer-events: none;
+}
+
+.paperrocket-studio-rail-inner { display: contents; }
+
+/* Four persistent work modes. Everything else is contextual. */
+.paperrocket-studio-mode-group {
+  position: fixed;
+  top: 50%;
+  right: 8px;
+  z-index: 50;
+  display: flex;
+  width: 54px;
+  padding: 5px;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 17px;
+  background: rgb(17 19 24 / 94%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 28%);
+  transform: translateY(-50%);
+  transition: transform 180ms ease-out, opacity 180ms ease-out;
+  pointer-events: auto;
+}
+
+.paperrocket-studio-rail[data-theme='light'] .paperrocket-studio-mode-group {
+  border-color: rgb(35 28 20 / 12%);
+  background: rgb(247 244 238 / 96%);
+  box-shadow: 0 12px 28px rgb(35 28 20 / 13%);
+}
+
+.paperrocket-studio-mode {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  gap: 0;
+}
+
+.paperrocket-studio-mode-label { display: none; }
+
+/* Five focused drawing controls stay centered at the bottom. Each shortcut
+   opens only the control it names; the Draw panel remains the full workspace. */
+.paperrocket-studio-quick-group {
+  position: fixed;
+  left: 50%;
+  bottom: max(7px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(calc(100% - 16px), 360px);
+  min-height: 62px;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 19px;
+  background: rgb(17 19 24 / 95%);
+  box-shadow: 0 -10px 30px rgb(0 0 0 / 28%);
+  transform: translateX(-50%);
+  transition: transform 180ms ease-out, opacity 180ms ease-out;
+  pointer-events: auto;
+}
+
+.paperrocket-placement-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.paperrocket-placement-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 7px 5px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.paperrocket-placement-choice[data-active='true'] {
+  background: rgb(255 255 255 / 12%);
+}
+
+.paperrocket-studio-rail[data-theme='light'] .paperrocket-placement-choice[data-active='true'] {
+  background: rgb(35 28 20 / 9%);
+}
+
+.paperrocket-studio-rail[data-theme='light'] .paperrocket-studio-quick-group {
+  border-color: rgb(35 28 20 / 12%);
+  background: rgb(247 244 238 / 97%);
+  box-shadow: 0 -10px 28px rgb(35 28 20 / 13%);
+}
+
+.paperrocket-studio-quick {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 5px 2px 4px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.paperrocket-studio-quick-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: .01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paperrocket-studio-quick--color > span:first-child { width: 22px; height: 22px; }
+
+.paperrocket-studio-mode[data-active='true'],
+.paperrocket-studio-quick[data-active='true'] {
+  background: rgb(255 255 255 / 12%) !important;
+  color: white;
+}
+
+.paperrocket-studio-rail[data-theme='light'] .paperrocket-studio-mode[data-active='true'],
+.paperrocket-studio-rail[data-theme='light'] .paperrocket-studio-quick[data-active='true'] {
+  background: rgb(35 28 20 / 9%) !important;
+  color: rgb(23 23 23);
+}
+
+.paperrocket-studio-expand { display: none; }
+
+.paperrocket-studio-rail[data-dock-position='left'] .paperrocket-studio-mode-group { left: 8px; right: auto; }
+.paperrocket-studio-rail[data-dock-position='right'] .paperrocket-studio-mode-group { left: auto; right: 8px; }
+
+.paperrocket-studio-rail[data-hidden='true'] .paperrocket-studio-quick-group {
+  opacity: 0;
+  transform: translate(-50%, calc(100% + 20px));
+  pointer-events: none;
+}
+
+.paperrocket-studio-rail[data-hidden='true'] .paperrocket-studio-mode-group,
+.paperrocket-studio-rail[data-dock-position='right'][data-hidden='true'] .paperrocket-studio-mode-group {
+  opacity: 0;
+  transform: translate(calc(100% + 20px), -50%);
+  pointer-events: none;
+}
+
+.paperrocket-studio-rail[data-dock-position='left'][data-hidden='true'] .paperrocket-studio-mode-group {
+  transform: translate(calc(-100% - 20px), -50%);
+}
+
+.paperrocket-studio-dock-reveal {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  width: 22px;
+  height: 48px;
+  border-radius: 12px 0 0 12px;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.paperrocket-studio-dock-reveal[data-dock-position='left'] {
+  left: 0;
+  right: auto;
+  border-radius: 0 12px 12px 0;
+}
+
+.paperrocket-studio-shelf {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+  width: min(calc(100% - 16px), 360px) !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  transform: translateX(-50%) !important;
+}
+
+.paperrocket-studio-shelf--compact { width: min(calc(100% - 16px), 220px) !important; }
+.paperrocket-studio-shelf--straight { width: min(calc(100% - 16px), 264px) !important; }
+.paperrocket-studio-shelf--brush {
+  width: min(88vw, 336px) !important;
+  max-width: 336px !important;
+}
+
+.paperrocket-context-panel {
+  left: 8px;
+  right: auto;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  width: calc(100vw - 76px);
+  max-width: 360px;
+  max-height: min(68dvh, calc(100dvh - 132px));
+  border-radius: 20px;
+  animation-name: enter;
+}
+
+  @media (min-width: 700px) {
+  .paperrocket-studio-quick-group {
+    grid-template-columns: repeat(5, minmax(72px, 1fr));
+    width: min(calc(100% - 24px), 430px);
+    min-height: 62px;
+  }
+
+  .paperrocket-studio-shelf {
+    bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .paperrocket-studio-rail[data-dock-position='auto'] .paperrocket-studio-mode-group {
+    left: 10px;
+    right: auto;
+  }
+
+  .paperrocket-studio-rail[data-dock-position='auto'][data-hidden='true'] .paperrocket-studio-mode-group {
+    transform: translate(calc(-100% - 20px), -50%);
+  }
+
+  .paperrocket-studio-dock-reveal[data-dock-position='auto'] {
+    left: 0;
+    right: auto;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .paperrocket-context-panel {
+    left: 72px;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: min(344px, calc(100vw - 96px));
+    max-height: min(64dvh, 680px);
+    border-radius: 18px;
+  }
+
+  .paperrocket-context-backdrop { display: none; }
+}
+
+.paperrocket-brush-card { isolation: isolate; }
+
+.paperrocket-brush-card:focus-visible,
+.paperrocket-studio-mode:focus-visible,
+.paperrocket-studio-quick:focus-visible,
+.paperrocket-placement-choice:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paperrocket-studio-mode-group,
+  .paperrocket-studio-quick-group { transition: none; }
+}

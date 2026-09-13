@@ -1,0 +1,55 @@
+# Cursor / Codex Ignore Rules for E:\X\AiStudio Workflow\V22
+
+# 1. Giant lock files (saves 30,000+ tokens per prompt)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# 2. Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+
+# 3. Automated test scripts and screenshot generators (saves 8,100+ lines from scans)
+scripts/
+
+# 4. Screenshots and media assets
+screenshots/
+fresh-audit-screenshots/
+ALL_SCREENSHOTS/
+audit-feedback/
+separated_images/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.svg
+*.mp4
+*.webm
+*.wasm
+
+# 5. Secrets, logs, and system files
+.env
+.env.*
+*.log
+.git/
+.DS_Store
+Thumbs.db
+
+# 6. Large data dumps in this project
+fresh-audit-report.json
+separated_images.html
+
+# 7. Documentation and historical audit logs (saves ~60KB of markdown text per prompt)
+APP_AUDIT_PROTOCOL.md
+AUDIT_FEEDBACK.md
+MOBILE_FIRST_IMPLEMENTATION_PLAN.md
+TECHNICAL_ISSUES.md
+PRODUCT.md
+DESIGN.md
+README.md
