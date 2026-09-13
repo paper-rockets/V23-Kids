@@ -9,6 +9,7 @@ import {
 } from './KidsScene';
 import { KidsToolbar } from './KidsToolbar';
 import { KidsBottomBar } from './KidsBottomBar';
+import { KidsMobileDock } from './KidsMobileDock';
 import {
   Save,
   Camera,
@@ -106,6 +107,8 @@ export const KidsApp: React.FC = () => {
   const [strokeStyle, setStrokeStyle] = useState<KidStrokeStyle>('3d_tube');
   const [isEraser, setIsEraser] = useState<boolean>(false);
   const [strokeCount, setStrokeCount] = useState<number>(0);
+  const [allowAirDrawing, setAllowAirDrawing] = useState<boolean>(true);
+  const [showCameraControls, setShowCameraControls] = useState<boolean>(true);
 
   // Model & Scene States
   const [toyIndex, setToyIndex] = useState<number>(0);
@@ -169,7 +172,8 @@ export const KidsApp: React.FC = () => {
     sceneRef.current.currentSize = currentSize;
     sceneRef.current.strokeStyle = strokeStyle;
     sceneRef.current.isEraser = isEraser;
-  }, [currentColor, currentShader, currentSize, strokeStyle, isEraser]);
+    sceneRef.current.allowAirDrawing = allowAirDrawing;
+  }, [currentColor, currentShader, currentSize, strokeStyle, isEraser, allowAirDrawing]);
 
   // Handle Tool selection
   const handleSelectBrush = useCallback(() => {
@@ -331,14 +335,14 @@ export const KidsApp: React.FC = () => {
         <div className="fixed inset-0 bg-white z-50 pointer-events-none transition-opacity duration-300 animate-out fade-out" />
       )}
 
-      {/* Top Header Navigation (Exact layout from Image 1) */}
+      {/* Top Header Navigation (Responsive, single-line, fits on phone and desktop) */}
       <header
         aria-label="Top Navigation"
-        className="absolute top-5 left-6 right-6 flex items-center justify-between z-20 pointer-events-none select-none"
+        className="absolute top-2.5 sm:top-5 left-2 sm:left-6 right-2 sm:right-6 flex items-center justify-between z-20 pointer-events-none select-none"
       >
-        {/* Top-Left: Clear / Restart Canvas & Undo (No studio access) */}
-        <div className="flex items-center gap-2.5 pointer-events-auto">
-          {/* 1. Clear / Delete Canvas to Restart (User requested) */}
+        {/* Top-Left: Clear / Restart Canvas & Undo */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto">
+          {/* 1. Clear / Delete Canvas to Restart */}
           <button
             onClick={() => {
               handleClearAll();
@@ -346,9 +350,9 @@ export const KidsApp: React.FC = () => {
               setTimeout(() => setSaveToast(null), 2500);
             }}
             title="Clear Canvas & Restart"
-            className="w-13 h-13 rounded-2xl bg-white hover:bg-rose-50 text-neutral-800 hover:text-rose-600 flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white hover:bg-rose-50 text-neutral-800 hover:text-rose-600 flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
           >
-            <Trash2 className="w-6 h-6 stroke-[2.4]" />
+            <Trash2 className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.4]" />
           </button>
 
           {/* 2. Undo Button */}
@@ -356,28 +360,28 @@ export const KidsApp: React.FC = () => {
             onClick={handleUndo}
             disabled={strokeCount === 0}
             title="Undo Last Stroke"
-            className={`w-13 h-13 rounded-2xl border-2 flex items-center justify-center transition-all active:translate-y-0.5 ${
+            className={`w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl border-2 flex items-center justify-center transition-all active:translate-y-0.5 ${
               strokeCount > 0
                 ? 'bg-white hover:bg-neutral-100 text-neutral-900 border-black cursor-pointer'
                 : 'bg-white text-neutral-300 border-neutral-300 cursor-not-allowed'
             }`}
           >
-            <RotateCcw className="w-6 h-6 stroke-[2.5]" />
+            <RotateCcw className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Top-Right: Fullscreen (White), Install (Purple), Camera (Green), Save (Blue), Toys (Red) */}
-        <div className="flex items-center gap-2.5 pointer-events-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto">
           {/* Full Screen Toggle Button */}
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
-            className="w-13 h-13 rounded-2xl bg-white hover:bg-neutral-100 text-black flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white hover:bg-neutral-100 text-black flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
           >
             {isFullscreen ? (
-              <Minimize className="w-6 h-6 stroke-[2.5]" />
+              <Minimize className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
             ) : (
-              <Maximize className="w-6 h-6 stroke-[2.5]" />
+              <Maximize className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
             )}
           </button>
 
@@ -386,50 +390,50 @@ export const KidsApp: React.FC = () => {
             <button
               onClick={promptInstall}
               title="Install App to Home Screen"
-              className="w-13 h-13 rounded-2xl bg-[#9333EA] hover:bg-[#7E22CE] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+              className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#9333EA] hover:bg-[#7E22CE] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
             >
-              <Download className="w-6 h-6 stroke-[2.5]" />
+              <Download className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
           )}
 
-          {/* 1. Camera Snap Button (Green from Image 1) */}
+          {/* 1. Camera Snap Button (Green) */}
           <button
             onClick={handleSnapDownload}
             title="Take Photo of Toy"
-            className="w-13 h-13 rounded-2xl bg-[#2E9E5B] hover:bg-[#25874D] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#2E9E5B] hover:bg-[#25874D] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
           >
-            <Camera className="w-6 h-6 stroke-[2.5]" />
+            <Camera className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
           </button>
 
-          {/* 2. Save / Export Button (Blue from Image 1) */}
+          {/* 2. Save / Export Button (Blue) */}
           <button
             onClick={handleSaveCreation}
             title="Save Creation to Gallery"
-            className="w-13 h-13 rounded-2xl bg-[#1E88E5] hover:bg-[#1976D2] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#1E88E5] hover:bg-[#1976D2] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
           >
-            <Save className="w-6 h-6 stroke-[2.5]" />
+            <Save className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
           </button>
 
-          {/* 3. Toys / 3D Models Button (Red from Image 1) - Replaced star icon with 3D models/shapes */}
+          {/* 3. Toys / 3D Models Button (Red) */}
           <button
             onClick={() => setShowToyGallery(true)}
             title="Choose a Cute 3D Toy"
-            className="w-13 h-13 rounded-2xl bg-[#E53935] hover:bg-[#D32F2F] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
+            className="w-9.5 h-9.5 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#E53935] hover:bg-[#D32F2F] text-white flex items-center justify-center transition-all border-2 border-black active:translate-y-0.5"
           >
-            <Shapes className="w-6 h-6 stroke-[2.5]" />
+            <Shapes className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[2.5]" />
           </button>
         </div>
       </header>
 
       {/* Save Success Toast */}
       {saveToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md px-6 py-3 rounded-3xl shadow-2xl border-4 border-purple-300 flex items-center gap-3 animate-bounce">
-          <span className="text-2xl">🎉</span>
-          <span className="text-sm font-black text-purple-950">{saveToast}</span>
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md px-5 py-2.5 sm:px-6 sm:py-3 rounded-3xl shadow-2xl border-4 border-purple-300 flex items-center gap-2.5 animate-bounce select-none">
+          <span className="text-xl sm:text-2xl">🎉</span>
+          <span className="text-xs sm:text-sm font-black text-purple-950">{saveToast}</span>
         </div>
       )}
 
-      {/* Left Toolbar with Claymorphic Dock & Flyouts */}
+      {/* Left Toolbar with Claymorphic Dock & Flyouts (Tablet & Desktop only: hidden md:flex) */}
       <KidsToolbar
         isEraser={isEraser}
         onSelectBrush={handleSelectBrush}
@@ -446,6 +450,27 @@ export const KidsApp: React.FC = () => {
         onUndo={handleUndo}
         onClearAll={handleClearAll}
         canUndo={strokeCount > 0}
+        allowAirDrawing={allowAirDrawing}
+        onToggleAirDrawing={() => setAllowAirDrawing((prev) => !prev)}
+      />
+
+      {/* Mobile Bottom Dock (Smartphones only: md:hidden) */}
+      <KidsMobileDock
+        isEraser={isEraser}
+        onSelectBrush={handleSelectBrush}
+        onSelectEraser={handleSelectEraser}
+        currentSize={currentSize}
+        onSelectSize={handleSelectSize}
+        activeColor={currentColor}
+        onSelectColor={handleSelectColor}
+        currentShader={currentShader}
+        onSelectShader={handleSelectShader}
+        strokeStyle={strokeStyle}
+        onToggleStrokeStyle={setStrokeStyle}
+        allowAirDrawing={allowAirDrawing}
+        onToggleAirDrawing={() => setAllowAirDrawing((prev) => !prev)}
+        showCameraControls={showCameraControls}
+        onToggleCameraControls={() => setShowCameraControls((prev) => !prev)}
       />
 
       {/* 3D Turntable D-Pad and Zoom Controls */}
@@ -461,6 +486,7 @@ export const KidsApp: React.FC = () => {
         onResetView={handleResetView}
         onToggleAutoSpin={handleToggleAutoSpin}
         isAutoSpinning={isAutoSpinning}
+        showCameraControls={showCameraControls}
       />
 
       {/* FULL 28-TOY GALLERY MODAL */}

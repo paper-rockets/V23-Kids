@@ -358,6 +358,7 @@ export class KidsScene {
   public currentSize: KidBrushSize = 'medium';
   public strokeStyle: KidStrokeStyle = '3d_tube';
   public isEraser: boolean = false;
+  public allowAirDrawing: boolean = true;
 
   // Active stroke drawing state
   private isDrawing: boolean = false;
@@ -905,6 +906,10 @@ export class KidsScene {
           ? lp.clone().addScaledVector(localNormal, radius * 0.55)
           : lp.clone().addScaledVector(localNormal, 0.007);
     } else {
+      if (!this.allowAirDrawing) {
+        this.isDrawing = false;
+        return;
+      }
       // Spatial 3D air drawing at currentDrawingDepth!
       this.raycaster.setFromCamera(this.pointerPos, this.camera);
       const worldAir = this.raycaster.ray.origin
@@ -960,6 +965,9 @@ export class KidsScene {
           ? lp.clone().addScaledVector(normal, radius * 0.55)
           : lp.clone().addScaledVector(normal, 0.007);
     } else {
+      if (!this.allowAirDrawing) {
+        return false;
+      }
       // Spatial 3D air point
       this.raycaster.setFromCamera(this.pointerPos, this.camera);
       const worldAir = this.raycaster.ray.origin

@@ -12,6 +12,7 @@ import {
   Trash2,
   Check,
   X,
+  Layers,
 } from 'lucide-react';
 import {
   KidBrushSize,
@@ -35,6 +36,8 @@ export interface KidsToolbarProps {
   onUndo: () => void;
   onClearAll: () => void;
   canUndo: boolean;
+  allowAirDrawing?: boolean;
+  onToggleAirDrawing?: () => void;
 }
 
 export const KID_COLORS = [
@@ -85,6 +88,8 @@ export const KidsToolbar: React.FC<KidsToolbarProps> = ({
   onUndo,
   onClearAll,
   canUndo,
+  allowAirDrawing = true,
+  onToggleAirDrawing,
 }) => {
   const [activeSubmenu, setActiveSubmenu] = useState<SubmenuType>('brush');
 
@@ -110,7 +115,7 @@ export const KidsToolbar: React.FC<KidsToolbarProps> = ({
   return (
     <aside
       aria-label="Drawing Tools"
-      className="absolute left-6 top-1/2 -translate-y-1/2 flex items-start z-30 pointer-events-auto select-none"
+      className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 items-start z-30 pointer-events-auto select-none"
     >
       {/* 5-Button Discrete Block Stack: Brush (Red), Erase (Blue), Stamp (Green), Paint (Yellow), Shape (White) */}
       <div className="flex flex-col gap-2 select-none">
@@ -284,6 +289,44 @@ export const KidsToolbar: React.FC<KidsToolbarProps> = ({
                     </button>
                   </div>
                 </div>
+
+                {/* Surface vs Air Mode Toggle Row */}
+                {onToggleAirDrawing && (
+                  <div className="flex flex-col gap-1 py-1 border-b border-black/15">
+                    <div className="flex items-center gap-1.5 text-[11px] font-black">
+                      <Layers className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Draw Mode</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <button
+                        onClick={() => {
+                          if (allowAirDrawing) onToggleAirDrawing();
+                        }}
+                        className={`flex-1 py-1.5 rounded-xl border-2 border-black text-[10px] font-black flex items-center justify-center gap-1 transition-all active:translate-y-0.5 ${
+                          !allowAirDrawing
+                            ? 'bg-white text-black'
+                            : 'bg-yellow-300 hover:bg-white/60'
+                        }`}
+                      >
+                        <span>🎯</span>
+                        <span>Surface</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!allowAirDrawing) onToggleAirDrawing();
+                        }}
+                        className={`flex-1 py-1.5 rounded-xl border-2 border-black text-[10px] font-black flex items-center justify-center gap-1 transition-all active:translate-y-0.5 ${
+                          allowAirDrawing
+                            ? 'bg-white text-black'
+                            : 'bg-yellow-300 hover:bg-white/60'
+                        }`}
+                      >
+                        <span>✨</span>
+                        <span>Air + Model</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Clear Canvas Row */}
                 <button

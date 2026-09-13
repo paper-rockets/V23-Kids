@@ -23,6 +23,7 @@ interface KidsBottomBarProps {
   onResetView: () => void;
   onToggleAutoSpin: () => void;
   isAutoSpinning: boolean;
+  showCameraControls?: boolean;
 }
 
 export const KidsBottomBar: React.FC<KidsBottomBarProps> = ({
@@ -31,41 +32,50 @@ export const KidsBottomBar: React.FC<KidsBottomBarProps> = ({
   onResetView,
   onToggleAutoSpin,
   isAutoSpinning,
+  showCameraControls = true,
 }) => {
   return (
     <>
-      {/* Right Side Zoom Pill (Exact layout from Image 1: rounded-full, border-2 border-black, NO shadows) */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-white border-2 border-black rounded-full p-1.5 flex flex-col items-center gap-1.5 select-none z-20 pointer-events-auto">
+      {/* Right Side Zoom Pill */}
+      <div
+        className={`${
+          showCameraControls ? 'flex' : 'hidden md:flex'
+        } absolute right-2 sm:right-6 top-18 sm:top-1/2 sm:-translate-y-1/2 scale-80 sm:scale-100 origin-top-right sm:origin-right bg-white border-2 border-black rounded-full p-1 sm:p-1.5 flex-col items-center gap-1 sm:gap-1.5 select-none z-20 pointer-events-auto`}
+      >
         {/* Zoom In (+) */}
         <button
           onClick={() => onZoom(-0.35)}
           title="Zoom In"
-          className="w-9 h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
         >
-          <Plus className="w-6 h-6 stroke-[3]" />
+          <Plus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
         </button>
 
         {/* Center Magnifying Glass / Reset Zoom */}
         <button
           onClick={onResetView}
           title="Reset Zoom & Center Toy"
-          className="w-9 h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
         >
-          <Search className="w-5 h-5 stroke-[2.6]" />
+          <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.6]" />
         </button>
 
         {/* Zoom Out (-) */}
         <button
           onClick={() => onZoom(0.35)}
           title="Zoom Out"
-          className="w-9 h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-neutral-100 flex items-center justify-center text-black active:translate-y-0.5"
         >
-          <Minus className="w-6 h-6 stroke-[3]" />
+          <Minus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
         </button>
       </div>
 
-      {/* Bottom-Right 4-Way Flower / Clover D-Pad Controller (Exact layout from Image 1: Flat, NO shadows) */}
-      <div className="absolute bottom-6 right-6 z-20 pointer-events-auto select-none">
+      {/* Bottom-Right 4-Way Flower / Clover D-Pad Controller */}
+      <div
+        className={`${
+          showCameraControls ? 'block' : 'hidden md:block'
+        } absolute bottom-20 sm:bottom-6 right-2 sm:right-6 scale-75 sm:scale-100 origin-bottom-right z-20 pointer-events-auto select-none`}
+      >
         <div className="relative w-28 h-28 flex items-center justify-center">
           {/* Top Petal (Red Arrow Up) */}
           <button
